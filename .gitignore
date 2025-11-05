@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+env/
+venv/
+*.sqlite3
+*.pyproj
+*.vscode/
+
+# Node / Electron
+node_modules/
+dist/
+out/
+frontend/build/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env
+.env
