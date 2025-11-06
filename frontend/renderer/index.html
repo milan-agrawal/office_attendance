@@ -1,0 +1,81 @@
+<!-- frontend/renderer/index.html -->
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Office Attendance — UI Preview</title>
+  <style>
+    /* Minimal glassmorphism + dark theme */
+    html,body{height:100%;margin:0;background:linear-gradient(135deg,#0f172a,#020617);font-family:Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial;}
+    .wrap{display:flex;align-items:center;justify-content:center;height:100%;}
+    .card{
+      width:920px;
+      max-width:92%;
+      padding:28px;
+      border-radius:18px;
+      background:rgba(255,255,255,0.04);
+      box-shadow: 0 6px 20px rgba(2,6,23,0.6);
+      backdrop-filter: blur(10px) saturate(140%);
+      -webkit-backdrop-filter: blur(10px) saturate(140%);
+      border: 1px solid rgba(255,255,255,0.06);
+      color:#e6eef8;
+    }
+    h1{margin:0 0 12px 0;font-weight:600;font-size:22px;}
+    .sub{color:rgba(230,238,248,0.7);margin-bottom:18px;}
+    .grid{display:grid;grid-template-columns:1fr 320px;gap:18px;}
+    .panel{padding:14px;border-radius:12px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.03);}
+    table{width:100%;border-collapse:collapse;color:inherit;}
+    td,th{padding:8px 6px;text-align:left;font-size:13px;}
+    .muted{color:rgba(230,238,248,0.6);font-size:12px;}
+    .btn{display:inline-block;padding:8px 12px;border-radius:10px;background:rgba(255,255,255,0.06);cursor:pointer;border:1px solid rgba(255,255,255,0.04);}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>Office Attendance — Dashboard</h1>
+      <div class="sub">Local app prototype · <span class="muted">Django + Electron</span></div>
+
+      <div class="grid">
+        <div>
+          <div class="panel">
+            <strong>Today</strong>
+            <div class="muted">10 present · 2 late · 1 absent</div>
+            <table style="margin-top:12px">
+              <thead><tr><th>Employee</th><th>In</th><th>Out</th><th></th></tr></thead>
+              <tbody>
+                <tr><td>Ravi Kumar</td><td>09:07</td><td>-</td><td><span class="btn">Mark out</span></td></tr>
+                <tr><td>Priya Singh</td><td>09:00</td><td>18:02</td><td><span class="muted">✔</span></td></tr>
+                <tr><td>Arun Patel</td><td>-</td><td>-</td><td><span class="btn">Mark in</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div>
+          <div class="panel">
+            <strong>Quick Actions</strong>
+            <div style="margin-top:10px;display:flex;gap:8px;flex-direction:column">
+              <button class="btn">Add Employee</button>
+              <button class="btn">Import CSV</button>
+              <button class="btn">Export Report</button>
+            </div>
+          </div>
+
+          <div style="height:12px"></div>
+
+          <div class="panel">
+            <strong>Analytics</strong>
+            <div class="muted" style="margin-top:8px">Last 30 days</div>
+            <div style="height:140px;display:flex;align-items:center;justify-content:center" id="chartHere">
+              <div class="muted">Chart.js area will appear here</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</body>
+</html>

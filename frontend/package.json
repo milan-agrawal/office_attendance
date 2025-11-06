@@ -1,0 +1,18 @@
+{
+  "name": "office-attendance-electron",
+  "version": "1.0.0",
+  "description": "Electron + Django Attendance System",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron ."
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "electron": "^39.1.0",
+    "electron-builder": "^26.0.12"
+  }
+}

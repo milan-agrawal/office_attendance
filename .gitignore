@@ -1,11 +1,16 @@
 # Python
 __pycache__/
 *.py[cod]
-env/
-venv/
 *.sqlite3
 *.pyproj
-*.vscode/
+
+# Virtual environment
+venv/
+env/
+
+# Django static & media
+staticfiles/
+media/
 
 # Node / Electron
 node_modules/
@@ -13,9 +18,14 @@ dist/
 out/
 frontend/build/
 
-# OS
+# System / IDE
 .DS_Store
 Thumbs.db
+.vscode/
+.idea/
 
-# Env
+# Env files
 .env
+
+# OS-generated
+desktop.ini
