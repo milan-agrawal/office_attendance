@@ -1,0 +1,165 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Login — Attendance</title>
+    <link rel="stylesheet" href="{% static 'style.css' %}" />
+    <style>
+
+      body{
+        margin: 0;
+        padding: 0;
+        font-family: Inter, system-ui, Segoe UI, Roboto, "Helvetica Neue", Arial;
+        overflow: hidden;
+      }
+      .auth-wrap {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+      .auth-card {
+        width: 420px;
+        max-width: 95%;
+        padding: 28px;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.03);
+        box-shadow: 0 10px 30px rgba(2, 6, 23, 0.7);
+      }
+      label {
+        display: block;
+        margin-top: 10px;
+        font-size: 13px;
+        color: var(--muted);
+      }
+      input {
+        width: 100%;
+        padding: 10px;
+        border-radius: 8px;
+        background: transparent;
+        border: 1px solid rgba(255, 255, 255, 0.04);
+        color: inherit;
+        margin-top: 8px;
+      }
+      .btn {
+        padding: 10px 14px;
+        border-radius: 8px;
+        cursor: pointer;
+        background: var(--accent);
+        color: #041426;
+        font-weight: 700;
+        border: none;
+        margin-top: 12px;
+        width: 100%;
+      }
+      .muted {
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .flash {
+        margin-bottom: 10px;
+        padding: 8px;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.02);
+      }
+      .aux-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 8px;
+        gap: 8px;
+      }
+      .checkbox-inline {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .small-link {
+        font-size: 13px;
+        color: var(--muted);
+        text-decoration: underline;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body class="theme-dark">
+    {% comment %} <div class="topbar-right">
+      {% if request.user.is_authenticated %}
+      <div style="display: flex; align-items: center; gap: 10px">
+        <div style="text-align: right">
+          <div style="font-weight: 600">{{ request.user.username }}</div>
+          <div class="muted small">Signed in</div>
+        </div>
+
+        {% if request.session.remember_me %}
+        <div class="remember-badge" title="You chose 'Remember me' on login">
+          ⭐ Remembered
+        </div>
+        {% endif %}
+
+        <a href="{% url 'logout' %}" class="icon-btn" style="margin-left: 8px"
+          >Logout</a
+        >
+      </div>
+      {% else %}
+      <a href="{% url 'login' %}" class="icon-btn">Login</a>
+      {% endif %}
+    </div> {% endcomment %}
+
+    <div class="auth-wrap">
+      <div class="auth-card" role="main" aria-labelledby="signin-title">
+        <h2 id="signin-title">Sign in</h2>
+        <p class="muted">Manager / Employee login</p>
+
+        {% if messages %} {% for m in messages %}
+        <div class="flash">{{ m }}</div>
+        {% endfor %} {% endif %}
+
+        <form method="post" action="{% url 'login' %}">
+          {% csrf_token %} {% if next %}
+          <input type="hidden" name="next" value="{{ next }}" />
+          {% elif request.GET.next %}
+          <input type="hidden" name="next" value="{{ request.GET.next }}" />
+          {% endif %}
+
+          <label for="id_username">Username</label>
+          <input
+            id="id_username"
+            name="username"
+            placeholder="username or email"
+            required
+            autofocus
+          />
+
+          <label for="id_password">Password</label>
+          <input
+            id="id_password"
+            name="password"
+            type="password"
+            placeholder="password"
+            required
+          />
+
+          <div class="aux-row">
+            <label class="checkbox-inline">
+              <input type="checkbox" name="remember_me" value="1" /> Remember
+              me</label
+            >
+            <a class="small-link" href="#">Forgot password?</a>
+          </div>
+
+          <button class="btn" type="submit">Login</button>
+        </form>
+
+        <div style="margin-top: 12px" class="muted">
+          Manager accounts should be created via Django admin
+          (<code>createsuperuser</code>) or admin UI.
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

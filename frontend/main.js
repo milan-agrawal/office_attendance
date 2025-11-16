@@ -1,4 +1,4 @@
-// frontend/main.js
+// frontend/main.js (robust, verbose, fallback)
 const { app, BrowserWindow, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
@@ -6,30 +6,27 @@ const { spawn } = require('child_process');
 const http = require('http');
 
 let backendProcess = null;
-
-// The Django URL we expect to load
 const DJANGO_URL = 'http://127.0.0.1:8000';
-const MAX_WAIT_MS = 30000; // 30 seconds max wait
+const MAX_WAIT_MS = 120000; // 120 seconds
+const MAX_ATTEMPTS = 60; // fallback after this many attempts (attempt every 2s)
+const ATTEMPT_INTERVAL = 2000;
 
-// Helper: find manage.py dynamically
 function findManagePy() {
   const candidate = path.join(__dirname, '..', 'backend', 'manage.py');
   if (fs.existsSync(candidate)) return candidate;
-  dialog.showErrorBox('manage.py not found', `Expected at: ${candidate}`);
+  console.warn('manage.py not found at', candidate);
   return null;
 }
 
-// Helper: start backend process
 function startBackend() {
   const managePy = findManagePy();
-  if (!managePy) return;
-
-  // Prefer using your local venv Python if available
+  if (!managePy) {
+    console.warn('No manage.py — assuming backend started manually.');
+    return;
+  }
   const venvPython = path.join(__dirname, '..', 'venv', 'Scripts', 'python.exe');
   const pythonCmd = fs.existsSync(venvPython) ? venvPython : 'python';
-
   const manageDir = path.dirname(managePy);
-  console.log(`[INFO] Starting Django backend from: ${manageDir}`);
 
   backendProcess = spawn(pythonCmd, [managePy, 'runserver', '127.0.0.1:8000'], {
     cwd: manageDir,
@@ -40,39 +37,46 @@ function startBackend() {
   backendProcess.stdout.on('data', (data) => {
     console.log(`[backend] ${data.toString().trim()}`);
   });
-
   backendProcess.stderr.on('data', (data) => {
     console.error(`[backend-err] ${data.toString().trim()}`);
   });
-
   backendProcess.on('close', (code) => {
     console.log(`[backend] exited with code ${code}`);
   });
 }
 
-// Helper: wait for Django to start before opening window
 function waitForServer(url, timeoutMs = MAX_WAIT_MS) {
   const start = Date.now();
+  let attempts = 0;
   return new Promise((resolve, reject) => {
-    function check() {
+    function attempt() {
+      attempts++;
       const req = http.get(url, (res) => {
-        if (res.statusCode < 500) {
-          res.destroy();
-          return resolve(true);
+        const code = res.statusCode;
+        console.log(`[checker] got status ${code} on attempt ${attempts}`);
+        res.destroy();
+        // consider 2xx and 3xx as success
+        if (code >= 200 && code < 400) return resolve(true);
+        // otherwise keep waiting until timeout/fallback
+        if (Date.now() - start > timeoutMs || attempts >= MAX_ATTEMPTS) {
+          return reject(new Error('Timeout waiting for backend; last status ' + code));
+        } else {
+          setTimeout(attempt, ATTEMPT_INTERVAL);
         }
       });
-      req.on('error', () => {
-        if (Date.now() - start > timeoutMs) {
-          return reject(new Error('Timeout waiting for backend to start'));
+      req.on('error', (err) => {
+        console.log(`[checker] attempt ${attempts} - error: ${err.message}`);
+        if (Date.now() - start > timeoutMs || attempts >= MAX_ATTEMPTS) {
+          return reject(new Error('Timeout waiting for backend (network error)'));
+        } else {
+          setTimeout(attempt, ATTEMPT_INTERVAL);
         }
-        setTimeout(check, 500);
       });
     }
-    check();
+    attempt();
   });
 }
 
-// Create Electron window
 function createWindow() {
   const win = new BrowserWindow({
     width: 1280,
@@ -85,31 +89,43 @@ function createWindow() {
   });
 
   win.loadURL(DJANGO_URL);
-  // win.webContents.openDevTools(); // enable for debugging
-
+  // win.webContents.openDevTools();
   win.on('closed', () => {
     if (backendProcess) {
-      console.log('[INFO] Terminating backend process...');
-      backendProcess.kill();
+      try { backendProcess.kill(); } catch (e) {}
     }
   });
 }
 
 app.whenReady().then(async () => {
-  // Start backend
-  startBackend();
-
+  // START BACKEND: comment out startBackend() if you prefer to start Django manually
   try {
-    console.log('[INFO] Waiting for Django backend to respond...');
-    await waitForServer(DJANGO_URL);
-    console.log('[INFO] Django backend ready. Launching window.');
-  } catch (err) {
-    console.error('[ERROR] Django did not start in time:', err.message);
-    dialog.showErrorBox('Backend Error', 'Django backend failed to start in time.');
+    startBackend();
+  } catch (e) {
+    console.warn('[INFO] startBackend failed:', e && e.message);
   }
 
-  // Open window whether backend started or not (for dev)
-  createWindow();
+  try {
+    console.log('[INFO] Waiting up to', MAX_WAIT_MS / 1000, 's for Django...');
+    await waitForServer(DJANGO_URL, MAX_WAIT_MS);
+    console.log('[INFO] Backend responded — launching window.');
+    createWindow();
+  } catch (err) {
+    console.warn('[WARN] Backend did not respond in time:', err.message);
+    // As a developer convenience, open the window anyway so you can inspect frontend or devtools
+    const choice = dialog.showMessageBoxSync({
+      type: 'warning',
+      buttons: ['Open anyway', 'Cancel'],
+      defaultId: 0,
+      message: 'Backend did not respond within the timeout.',
+      detail: 'You can open the app window anyway (useful for frontend work), or cancel to troubleshoot the backend.',
+    });
+    if (choice === 0) {
+      createWindow();
+    } else {
+      console.log('[INFO] User chose to cancel launching the window.');
+    }
+  }
 });
 
 app.on('window-all-closed', () => {

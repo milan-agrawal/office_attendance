@@ -1,0 +1,85 @@
+{% load static %}
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Employee — Home</title>
+  <link rel="stylesheet" href="{% static 'style.css' %}">
+</head>
+<body class="theme-dark">
+  <div style="max-width:1000px;margin:20px auto;padding:12px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <h2>Welcome{% if employee %}, {{ employee.name }}{% endif %}</h2>
+      <div>
+        <a href="{% url 'logout' %}" class="icon-btn">Logout</a>
+      </div>
+    </div>
+
+    {% if not employee %}
+      <div class="card"><p class="muted">Your account is not linked to an employee record. Contact admin.</p></div>
+    {% else %}
+      <div class="card">
+        <div style="display:flex;gap:18px;align-items:center;">
+          <div>
+            <div class="muted">Emp ID</div>
+            <div class="metric">{{ employee.emp_id }}</div>
+          </div>
+          <div>
+            <div class="muted">Type</div>
+            <div class="metric">{{ employee.get_employment_type_display }}</div>
+          </div>
+          <div>
+            <div class="muted">Paid Leave Quota</div>
+            <div class="metric">{{ employee.paid_leave_quota }}</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 320px;gap:16px;margin-top:12px;">
+        <div>
+          <div class="card">
+            <h3 class="muted">Upcoming Leaves</h3>
+            <div class="list-small">
+              {% for l in upcoming_leaves %}
+                <div class="list-item">
+                  <div><strong>{{ l.leave_type }}</strong> — {{ l.start_date }} → {{ l.end_date }}</div>
+                </div>
+              {% empty %}
+                <div class="muted">No upcoming leaves</div>
+              {% endfor %}
+            </div>
+          </div>
+
+          <div class="card" style="margin-top:12px;">
+            <h3 class="muted">Recent Salary</h3>
+            <div class="list-small">
+              {% for s in salaries %}
+                <div class="list-item">
+                  <div>{{ s.year }}-{{ s.month|stringformat:"02d" }}</div>
+                  <div class="muted">₹ {{ s.net_salary }}</div>
+                </div>
+              {% empty %}
+                <div class="muted">No salary records</div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="card">
+            <h3 class="muted">Notifications</h3>
+            <div class="list-small">
+              {% for n in notifications %}
+                <div class="list-item"><div class="small">{{ n.subject|default:"(no subject)" }}</div><div class="muted small">{{ n.timestamp|date:"Y-m-d" }}</div></div>
+              {% empty %}
+                <div class="muted">No notifications</div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+
+  </div>
+</body>
+</html>

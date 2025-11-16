@@ -1,0 +1,116 @@
+/* frontend/renderer/style.css
+   Dark glassmorphism theme with fallback to light. Use system fonts. */
+
+:root{
+  --bg-1: #06070a;
+  --bg-2: #071127;
+  --glass: rgba(255,255,255,0.04);
+  --glass-2: rgba(255,255,255,0.02);
+  --text: #e6eef8;
+  --muted: rgba(230,238,248,0.65);
+  --accent: #48bbff;
+  --success: #34d399;
+  --danger: #fb7185;
+  --card-radius: 14px;
+  --shadow: 0 8px 30px rgba(2,6,23,0.75);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* Light theme variables */
+.theme-light {
+  --bg-1: #f8fafc;
+  --bg-2: #ffffff;
+  --glass: rgba(2,6,23,0.04);
+  --glass-2: rgba(2,6,23,0.02);
+  --text: #041426;
+  --muted: rgba(4,20,38,0.55);
+  --accent: #0066cc;
+  --shadow: 0 6px 24px rgba(2,6,23,0.06);
+}
+
+/* Page */
+body{
+  margin:0;
+  min-height:100vh;
+  background: linear-gradient(180deg, var(--bg-1) 0%, var(--bg-2) 100%);
+  color:var(--text);
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+}
+
+/* Topbar */
+.topbar{
+  height:76px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:16px 28px;
+  backdrop-filter: blur(8px) saturate(140%);
+  background: linear-gradient(90deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));
+  border-bottom: 1px solid rgba(255,255,255,0.02);
+}
+.brand{ margin:0; font-size:18px; letter-spacing:0.2px; }
+.topbar .muted{ color:var(--muted); margin-top:4px; font-size:13px; }
+
+/* Container */
+.container{ max-width:1200px; margin:22px auto; padding:0 18px; }
+
+/* Grid */
+.grid{ display:grid; gap:18px; grid-auto-rows: minmax(120px, auto); }
+.grid-3{
+  grid-template-columns: repeat(3, 1fr);
+}
+@media (max-width: 980px){
+  .grid-3{ grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 640px){
+  .grid-3{ grid-template-columns: 1fr; }
+}
+
+/* Cards */
+.card{
+  border-radius: var(--card-radius);
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  border: 1px solid rgba(255,255,255,0.03);
+  padding:18px;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(10px) saturate(150%);
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+.card:hover{ transform: translateY(-4px); box-shadow: 0 14px 40px rgba(2,6,23,0.85); }
+
+/* Metric cards */
+.card-metric{ display:flex; align-items:center; justify-content:space-between; min-height:120px; }
+.card-row{ display:flex; align-items:center; justify-content:space-between; width:100%; }
+.card-icon{ font-size:32px; opacity:0.95; }
+.muted{ color:var(--muted); font-size:13px; }
+.metric{ font-size:26px; font-weight:700; margin-top:8px; color:var(--text); }
+.pay-large{ font-size:28px; font-weight:800; margin-top:10px; }
+
+/* wide/full cards */
+.card-wide{ grid-column: span 2; min-height:120px; }
+.full-card{ grid-column: 1 / -1; padding:20px; }
+
+/* Lists */
+.list-small{ margin-top:12px; display:flex; flex-direction:column; gap:8px; max-height:220px; overflow:auto; padding-right:6px; }
+.list-item{ display:flex; justify-content:space-between; align-items:center; padding:8px; border-radius:10px; background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00)); border:1px solid rgba(255,255,255,0.02); }
+.audit-item{ padding:10px; border-radius:10px; background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00)); border:1px solid rgba(255,255,255,0.02); }
+
+/* small utilities */
+.small{ font-size:13px; color:var(--muted); }
+.icon-btn{ background:transparent; border:1px solid rgba(255,255,255,0.03); padding:8px 10px; border-radius:10px; cursor:pointer; color:var(--text); }
+.icon-btn:hover{ transform:translateY(-2px); }
+
+/* responsive tweaks */
+@media (max-width: 680px){
+  .card-metric{ min-height:100px; }
+  .pay-large{ font-size:20px; }
+}
+
+/* scrollbar (subtle) */
+.list-small::-webkit-scrollbar{ width:8px; }
+.list-small::-webkit-scrollbar-thumb{ background: rgba(255,255,255,0.03); border-radius:6px; }
+
+/* subtle fade-in for content */
+.container{ animation:fadeIn .35s ease both; }
+@keyframes fadeIn{ from{ opacity:0; transform: translateY(8px);} to{ opacity:1; transform:none;} }

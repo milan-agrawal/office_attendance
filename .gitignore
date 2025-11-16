@@ -26,6 +26,7 @@ Thumbs.db
 
 # Env files
 .env
+backend/.env
 
 # OS-generated
 desktop.ini

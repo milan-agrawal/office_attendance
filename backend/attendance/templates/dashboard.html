@@ -1,15 +1,229 @@
-<!DOCTYPE html>
+{% load static %}
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Django + Electron | Attendance System</title>
-  <link rel="stylesheet" href="/static/style.css">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Office Attendance — Dashboard</title>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- main css -->
+  <link rel="stylesheet" href="{% static 'style.css' %}" />
 </head>
-<body>
-  <div class="container">
-    <h1>Office Attendance Dashboard</h1>
-    <p>This page is rendered by <strong>Django</strong> and displayed inside <strong>Electron</strong>.</p>
-  </div>
+<body class="theme-dark">
+  <header class="topbar">
+    <div class="topbar-left">
+      <h1 class="brand">Attendance • Dashboard</h1>
+      <div class="muted small">
+        Overview —
+        {% if request.user.is_authenticated %}
+          {{ request.user.first_name }} {{ request.user.last_name }}
+        {% else %}
+          Manager
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="topbar-right">
+      <div style="display:flex; align-items:center; gap:10px;">
+
+        {% if request.user.is_authenticated %}
+          <div style="text-align:right; min-width:120px;">
+            <div style="font-weight:600; font-size:14px;">
+              {{ request.user.first_name }} {{ request.user.last_name }}
+            </div>
+            <div class="muted small">Signed in</div>
+          </div>
+          <a href="{% url 'logout' %}" class="icon-btn" title="Logout">Logout</a>
+        {% else %}
+          <a href="{% url 'login' %}" class="icon-btn">Login</a>
+        {% endif %}
+
+        <button id="toggle-theme" class="icon-btn" title="Toggle theme">🌓</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="grid grid-3">
+
+      <!-- Total employees -->
+      <article class="card card-metric">
+        <div class="card-row">
+          <div>
+            <div class="muted">Total Employees</div>
+            <div class="metric" data-value="{{ total_employees|default:0 }}">0</div>
+          </div>
+          <div class="card-icon">👥</div>
+        </div>
+      </article>
+
+      <!-- On leave today -->
+      <article class="card card-metric">
+        <div class="card-row">
+          <div>
+            <div class="muted">On Leave Today</div>
+            <div class="metric" data-value="{{ on_leave_today_count|default:0 }}">0</div>
+          </div>
+          <div class="card-icon">🗓️</div>
+        </div>
+      </article>
+
+      <!-- Pending leaves -->
+      <article class="card card-metric">
+        <div class="card-row">
+          <div>
+            <div class="muted">Pending Leaves</div>
+            <div class="metric" data-value="{{ pending_leaves_count|default:0 }}">0</div>
+          </div>
+          <div class="card-icon">⏳</div>
+        </div>
+      </article>
+
+      <!-- Payroll: visible only to staff -->
+      {% if request.user.is_authenticated and request.user.is_staff %}
+      <article class="card card-wide">
+        <div class="muted">Payroll This Month (Net)</div>
+        <div class="pay-large">
+          ₹ <span class="metric" data-value="{{ payroll_sum|default:0 }}">0</span>
+        </div>
+      </article>
+      {% endif %}
+
+      <!-- Upcoming Leaves -->
+      <article class="card">
+        <div class="muted">Upcoming Leaves</div>
+        <div class="list-small">
+          {% for l in upcoming_leaves %}
+            <div class="list-item">
+              <div class="list-left">
+                <strong>{{ l.employee.first_name }} {{ l.employee.last_name }}</strong>
+              </div>
+              <div class="list-right small muted">{{ l.date }}</div>
+            </div>
+          {% empty %}
+            <div class="muted">No upcoming leaves</div>
+          {% endfor %}
+        </div>
+      </article>
+
+      <!-- Notifications -->
+      <article class="card">
+        <div class="muted">Recent Notifications</div>
+        <div class="list-small">
+          {% for n in notifications %}
+            <div class="list-item">
+              <div class="list-left small">{{ n.recipient }}</div>
+              <div class="list-right small muted">{{ n.timestamp|date:"Y-m-d H:i" }}</div>
+            </div>
+          {% empty %}
+            <div class="muted">No notifications</div>
+          {% endfor %}
+        </div>
+      </article>
+
+      <!-- Late comers chart -->
+      <article class="card full-card">
+        <div class="muted">Late Comers — This Month</div>
+
+        {% if late_labels and late_values %}
+          <canvas id="lateChart" height="140"></canvas>
+        {% else %}
+          <div style="padding:18px" class="muted">No late arrivals recorded this month.</div>
+        {% endif %}
+      </article>
+
+      <!-- Audit logs -->
+      <article class="card">
+        <div class="muted">Recent Audit Logs</div>
+        <div class="list-small">
+          {% for a in audit_logs %}
+            <div class="audit-item">
+              <div style="font-weight:600">
+                {{ a.actor|default:"system" }} — {{ a.action }}
+              </div>
+              <div class="muted small">{{ a.timestamp|date:"Y-m-d H:i" }}</div>
+              <div class="small">{{ a.details|truncatechars:110 }}</div>
+            </div>
+          {% empty %}
+            <div class="muted">No audit entries</div>
+          {% endfor %}
+        </div>
+      </article>
+
+    </section>
+  </main>
+
+  <script>
+    /* Animated counters */
+    document.querySelectorAll('.metric').forEach(el => {
+      const target = Number(el.dataset.value || 0);
+      let current = 0;
+      const step = Math.max(1, Math.round(target / 60));
+      const id = setInterval(() => {
+        current += step;
+        if (current >= target) {
+          el.textContent = target.toLocaleString();
+          clearInterval(id);
+        } else {
+          el.textContent = current.toLocaleString();
+        }
+      }, 12);
+    });
+
+    /* Chart.js */
+    const lateLabels = {{ late_labels|default:"[]"|safe }};
+    const lateValues = {{ late_values|default:"[]"|safe }};
+
+    if (lateLabels.length) {
+      const ctx = document.getElementById('lateChart').getContext('2d');
+      const gradient = ctx.createLinearGradient(0, 0, 0, 200);
+      gradient.addColorStop(0, 'rgba(72,187,255,0.9)');
+      gradient.addColorStop(1, 'rgba(0,120,212,0.15)');
+
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: lateLabels,
+          datasets: [{
+            label: 'Lates',
+            data: lateValues,
+            backgroundColor: gradient,
+            borderRadius: 8,
+            barThickness: 18,
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: c => ` ${c.parsed.y} late(s)`
+              }
+            }
+          },
+          scales: {
+            x: { grid: { display: false } },
+            y: { beginAtZero: true }
+          }
+        }
+      });
+    }
+
+    /* Theme toggle */
+    const toggle = document.getElementById('toggle-theme');
+    function applyTheme(t) {
+      document.body.className = t === 'light' ? 'theme-light' : 'theme-dark';
+      localStorage.setItem('site_theme', t);
+    }
+    toggle?.addEventListener('click', () => {
+      const now = localStorage.getItem('site_theme') || 'dark';
+      applyTheme(now === 'dark' ? 'light' : 'dark');
+    });
+    applyTheme(localStorage.getItem('site_theme') || 'dark');
+  </script>
 </body>
 </html>
